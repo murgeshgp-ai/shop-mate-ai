@@ -8,7 +8,7 @@ import {
   INITIAL_DAILY_SALES,
   INITIAL_BILLS,
   INITIAL_EXPENSES,
-} from '../src/data/sampleData.js';
+} from '../src/data/sampleData.ts';
 import {
   Product,
   Supplier,
@@ -19,7 +19,7 @@ import {
   BillItem,
   Expense,
   FinancialSummary,
-} from '../src/types.js';
+} from '../src/types.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

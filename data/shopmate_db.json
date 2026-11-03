@@ -31,7 +31,7 @@
       "name": "Tata Salt Vacuum Evaporated (1kg)",
       "category": "Pantry",
       "sku": "PAN-102",
-      "quantity": 35,
+      "quantity": 34,
       "purchasePrice": 22,
       "sellingPrice": 28,
       "minStockThreshold": 10,
@@ -45,7 +45,7 @@
         {
           "id": "b-102",
           "batchNumber": "SLT-2026-44",
-          "quantity": 35,
+          "quantity": 34,
           "expiryDate": "2028-04-10",
           "purchasePrice": 22,
           "purchaseDate": "2026-10-26"
@@ -696,13 +696,46 @@
     {
       "date": "2026-11-03",
       "dayName": "Today",
-      "sales": 21645,
-      "cost": 17395,
-      "profit": 4250,
-      "transactions": 60
+      "sales": 21673,
+      "cost": 17417,
+      "profit": 4256,
+      "transactions": 61
     }
   ],
   "bills": [
+    {
+      "id": "bill-1793729722022",
+      "invoiceNumber": "INV-2026-1006",
+      "date": "2026-11-03",
+      "time": "06:15:22 PM",
+      "items": [
+        {
+          "productId": "prod-2",
+          "productName": "Tata Salt Vacuum Evaporated (1kg)",
+          "sku": "PAN-102",
+          "unit": "packet",
+          "quantity": 1,
+          "unitPrice": 28,
+          "costPrice": 22,
+          "total": 28,
+          "batchesDeducted": [
+            {
+              "batchNumber": "SLT-2026-44",
+              "quantity": 1,
+              "expiryDate": "2028-04-10"
+            }
+          ]
+        }
+      ],
+      "subtotal": 28,
+      "discount": 0,
+      "totalAmount": 28,
+      "costOfGoods": 22,
+      "profit": 6,
+      "paymentMethod": "cash",
+      "paymentStatus": "paid",
+      "createdAt": "2026-11-03T18:15:22.021Z"
+    },
     {
       "id": "bill-1793726910093",
       "invoiceNumber": "INV-2026-1005",
@@ -1064,5 +1097,5 @@
       "createdAt": "2026-10-30T11:00:00Z"
     }
   ],
-  "lastUpdated": "2026-11-03T17:28:30.093Z"
+  "lastUpdated": "2026-11-03T18:15:22.022Z"
 }

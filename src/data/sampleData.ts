@@ -1,4 +1,4 @@
-import { Product, DailySale, Suggestion, Supplier, PurchaseOrder, Bill, Expense } from '../types';
+import { Product, DailySale, Suggestion, Supplier, PurchaseOrder, Bill, Expense } from '../types.ts';
 
 export const INITIAL_SUPPLIERS: Supplier[] = [
   {
