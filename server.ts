@@ -150,6 +150,86 @@ async function startServer() {
     }
   });
 
+  // === Customer Management APIs (Phase 4, Step 1) ===
+  app.get('/api/customers', async (_req, res) => {
+    try {
+      const customers = await db.getCustomers();
+      res.json(customers);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get('/api/customers/:id', async (req, res) => {
+    try {
+      const customer = await db.getCustomer(req.params.id);
+      if (!customer) {
+        return res.status(404).json({ error: 'Customer not found' });
+      }
+      res.json(customer);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get('/api/customers/:id/profile', async (req, res) => {
+    try {
+      const profile = await db.getCustomerProfile(req.params.id);
+      res.json(profile);
+    } catch (err: any) {
+      res.status(404).json({ error: err.message });
+    }
+  });
+
+  app.post('/api/customers', async (req, res) => {
+    try {
+      if (!req.body.name || !req.body.name.trim()) {
+        return res.status(400).json({ error: 'Customer full name is required.' });
+      }
+      if (!req.body.phone || !req.body.phone.trim()) {
+        return res.status(400).json({ error: 'Customer phone number is required.' });
+      }
+      const customer = await db.saveCustomer(req.body);
+      res.status(201).json(customer);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.put('/api/customers/:id', async (req, res) => {
+    try {
+      if (!req.body.name || !req.body.name.trim()) {
+        return res.status(400).json({ error: 'Customer full name is required.' });
+      }
+      if (!req.body.phone || !req.body.phone.trim()) {
+        return res.status(400).json({ error: 'Customer phone number is required.' });
+      }
+      const customer = await db.saveCustomer({ ...req.body, id: req.params.id });
+      res.json(customer);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.post('/api/customers/:id/archive', async (req, res) => {
+    try {
+      const archive = req.body.archive !== false;
+      const updated = await db.archiveCustomer(req.params.id, archive);
+      res.json(updated);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.delete('/api/customers/:id', async (req, res) => {
+    try {
+      const result = await db.deleteCustomer(req.params.id);
+      res.json(result);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
   // Purchase Order APIs
   app.get('/api/purchases', async (_req, res) => {
     try {

@@ -10,6 +10,9 @@ import { SuggestionsView } from './components/SuggestionsView';
 import { ChatView } from './components/ChatView';
 import { BillingView } from './components/BillingView';
 import { ExpensesView } from './components/ExpensesView';
+import { CustomersView } from './components/CustomersView';
+import { CustomerModal } from './components/CustomerModal';
+import { CustomerProfileModal } from './components/CustomerProfileModal';
 import { ReceiptModal } from './components/ReceiptModal';
 import { ProductModal } from './components/ProductModal';
 import { QuickSaleModal } from './components/QuickSaleModal';
@@ -25,6 +28,7 @@ import {
   INITIAL_PURCHASE_ORDERS,
   INITIAL_BILLS,
   INITIAL_EXPENSES,
+  INITIAL_CUSTOMERS,
 } from './data/sampleData';
 import {
   Product,
@@ -37,6 +41,7 @@ import {
   Bill,
   Expense,
   FinancialSummary,
+  Customer,
 } from './types';
 import { calculateShopStats, formatCurrency, getEarliestExpiry } from './utils/formatters';
 import { CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
@@ -102,13 +107,24 @@ function ShopMateApp() {
     return INITIAL_EXPENSES;
   });
 
-  // 6. Financial summary state
+  // 6. Customers state with persistent storage (Phase 4, Step 1)
+  const [customers, setCustomers] = useState<Customer[]>(() => {
+    try {
+      const saved = localStorage.getItem('shopmate_indian_customers');
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // fallback
+    }
+    return INITIAL_CUSTOMERS;
+  });
+
+  // 7. Financial summary state
   const [financialSummary, setFinancialSummary] = useState<FinancialSummary | null>(null);
 
-  // 7. Active Receipt modal
+  // 8. Active Receipt modal
   const [activeReceiptBill, setActiveReceiptBill] = useState<Bill | null>(null);
 
-  // 8. Sales and suggestions state
+  // 9. Sales and suggestions state
   const [dailySales, setDailySales] = useState<DailySale[]>(() => {
     try {
       const saved = localStorage.getItem('shopmate_indian_sales');
@@ -146,6 +162,12 @@ function ShopMateApp() {
   const [editingPurchaseOrder, setEditingPurchaseOrder] = useState<PurchaseOrder | null>(null);
   const [initialPoSupplierId, setInitialPoSupplierId] = useState<string | undefined>();
 
+  // Customer Modals state (Phase 4)
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [viewingCustomerProfile, setViewingCustomerProfile] = useState<Customer | null>(null);
+  const [selectedCustomerForBill, setSelectedCustomerForBill] = useState<Customer | null>(null);
+
   const [isQuickSaleOpen, setIsQuickSaleOpen] = useState(false);
 
   // Suggestions state
@@ -165,11 +187,12 @@ function ShopMateApp() {
   useEffect(() => {
     const fetchBackendData = async () => {
       try {
-        const [allDataRes, billsRes, expensesRes, finRes] = await Promise.allSettled([
+        const [allDataRes, billsRes, expensesRes, finRes, customersRes] = await Promise.allSettled([
           fetch('/api/all-data'),
           fetch('/api/bills'),
           fetch('/api/expenses'),
           fetch('/api/financial-summary'),
+          fetch('/api/customers'),
         ]);
 
         if (allDataRes.status === 'fulfilled' && allDataRes.value.ok) {
@@ -178,6 +201,12 @@ function ShopMateApp() {
           if (Array.isArray(data.suppliers) && data.suppliers.length > 0) setSuppliers(data.suppliers);
           if (Array.isArray(data.purchases) && data.purchases.length > 0) setPurchases(data.purchases);
           if (Array.isArray(data.dailySales) && data.dailySales.length > 0) setDailySales(data.dailySales);
+          if (Array.isArray(data.customers) && data.customers.length > 0) setCustomers(data.customers);
+        }
+
+        if (customersRes.status === 'fulfilled' && customersRes.value.ok) {
+          const cData = await customersRes.value.json();
+          if (Array.isArray(cData) && cData.length > 0) setCustomers(cData);
         }
 
         if (billsRes.status === 'fulfilled' && billsRes.value.ok) {
@@ -217,6 +246,14 @@ function ShopMateApp() {
       console.error(e);
     }
   }, [suppliers]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('shopmate_indian_customers', JSON.stringify(customers));
+    } catch (e) {
+      console.error(e);
+    }
+  }, [customers]);
 
   useEffect(() => {
     try {
@@ -726,33 +763,38 @@ function ShopMateApp() {
         throw new Error(errData.error || 'Failed to create bill');
       }
 
-      const createdBill: Bill = await res.json();
+      const resData = await res.json();
+      const createdBill: Bill = resData.bill || resData;
 
-      // Deduct stock locally via FEFO
-      setProducts((prev) =>
-        prev.map((product) => {
-          const item = createdBill.items.find((i) => i.productId === product.id);
-          if (!item) return product;
+      if (Array.isArray(resData.updatedProducts) && resData.updatedProducts.length > 0) {
+        setProducts(resData.updatedProducts);
+      } else {
+        // Deduct stock locally via FEFO
+        setProducts((prev) =>
+          prev.map((product) => {
+            const item = (createdBill.items || []).find((i) => i.productId === product.id);
+            if (!item) return product;
 
-          let remainingToDeduct = item.quantity;
-          const updatedBatches = (product.batches || [])
-            .map((b) => ({ ...b }))
-            .sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime())
-            .map((batch) => {
-              if (remainingToDeduct <= 0) return batch;
-              const deduct = Math.min(batch.quantity, remainingToDeduct);
-              remainingToDeduct -= deduct;
-              return { ...batch, quantity: batch.quantity - deduct };
-            })
-            .filter((batch) => batch.quantity > 0);
+            let remainingToDeduct = item.quantity;
+            const updatedBatches = (product.batches || [])
+              .map((b) => ({ ...b }))
+              .sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime())
+              .map((batch) => {
+                if (remainingToDeduct <= 0) return batch;
+                const deduct = Math.min(batch.quantity, remainingToDeduct);
+                remainingToDeduct -= deduct;
+                return { ...batch, quantity: batch.quantity - deduct };
+              })
+              .filter((batch) => batch.quantity > 0);
 
-          return {
-            ...product,
-            quantity: Math.max(0, product.quantity - item.quantity),
-            batches: updatedBatches,
-          };
-        })
-      );
+            return {
+              ...product,
+              quantity: Math.max(0, product.quantity - item.quantity),
+              batches: updatedBatches,
+            };
+          })
+        );
+      }
 
       // Add to bills
       setBills((prev) => [createdBill, ...prev]);
@@ -854,6 +896,126 @@ function ShopMateApp() {
     } catch (err: any) {
       showToast(err.message || 'Error deleting expense', 'warning');
     }
+  };
+
+  // ==================== CUSTOMER ACTIONS (Phase 4, Step 1) ====================
+
+  const handleSaveCustomer = async (
+    customerData: Partial<Customer> & { name: string; phone: string }
+  ) => {
+    try {
+      if (editingCustomer) {
+        // Update existing customer
+        const res = await fetch(`/api/customers/${editingCustomer.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(customerData),
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Failed to update customer');
+        }
+
+        const updated: Customer = await res.json();
+        setCustomers((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+        if (viewingCustomerProfile && viewingCustomerProfile.id === updated.id) {
+          setViewingCustomerProfile(updated);
+        }
+        showToast(t('toastCustomerUpdated'), 'success');
+      } else {
+        // Create new customer
+        const res = await fetch('/api/customers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(customerData),
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Failed to create customer');
+        }
+
+        const created: Customer = await res.json();
+        setCustomers((prev) => [created, ...prev]);
+        showToast(t('toastCustomerAdded'), 'success');
+      }
+      setIsCustomerModalOpen(false);
+      setEditingCustomer(null);
+    } catch (err: any) {
+      showToast(err.message || 'Error saving customer', 'warning');
+      throw err;
+    }
+  };
+
+  const handleArchiveCustomer = async (customerId: string, archive: boolean) => {
+    try {
+      // Optimistic update
+      setCustomers((prev) =>
+        prev.map((c) => (c.id === customerId ? { ...c, status: archive ? 'archived' : 'active' } : c))
+      );
+
+      const res = await fetch(`/api/customers/${customerId}/archive`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archive }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to update customer status');
+      }
+
+      const updated: Customer = await res.json();
+      setCustomers((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+      if (viewingCustomerProfile && viewingCustomerProfile.id === customerId) {
+        setViewingCustomerProfile(updated);
+      }
+      showToast(
+        archive ? t('toastCustomerArchived') : t('toastCustomerUnarchived'),
+        'success'
+      );
+    } catch (err: any) {
+      showToast(err.message || 'Error updating customer', 'warning');
+    }
+  };
+
+  const handleDeleteCustomer = async (customerId: string) => {
+    try {
+      const res = await fetch(`/api/customers/${customerId}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to delete customer');
+      }
+
+      const resData = await res.json();
+      if (resData.archived) {
+        // Customer was archived because of transactions
+        setCustomers((prev) =>
+          prev.map((c) => (c.id === customerId ? { ...c, status: 'archived' } : c))
+        );
+        showToast(t('toastCustomerArchived'), 'info');
+      } else {
+        // Customer permanently deleted
+        setCustomers((prev) => prev.filter((c) => c.id !== customerId));
+        showToast(t('toastCustomerDeleted'), 'info');
+      }
+
+      if (viewingCustomerProfile && viewingCustomerProfile.id === customerId) {
+        setViewingCustomerProfile(null);
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Error deleting customer', 'warning');
+    }
+  };
+
+  const handleStartBillForCustomer = (customer: Customer) => {
+    setSelectedCustomerForBill(customer);
+    setViewingCustomerProfile(null);
+    setActiveTab('billing');
   };
 
   // Refresh Suggestions from Gemini AI in active language
@@ -1018,10 +1180,34 @@ function ShopMateApp() {
             />
           )}
 
+          {activeTab === 'customers' && (
+            <CustomersView
+              customers={customers}
+              bills={bills}
+              onOpenAddCustomer={() => {
+                setEditingCustomer(null);
+                setIsCustomerModalOpen(true);
+              }}
+              onOpenEditCustomer={(customer) => {
+                setEditingCustomer(customer);
+                setIsCustomerModalOpen(true);
+              }}
+              onViewCustomerProfile={(customer) => {
+                setViewingCustomerProfile(customer);
+              }}
+              onArchiveCustomer={handleArchiveCustomer}
+              onDeleteCustomer={handleDeleteCustomer}
+              onStartBillForCustomer={handleStartBillForCustomer}
+            />
+          )}
+
           {activeTab === 'billing' && (
             <BillingView
               inventory={products}
               bills={bills}
+              customers={customers}
+              selectedCustomerForBill={selectedCustomerForBill}
+              onClearSelectedCustomer={() => setSelectedCustomerForBill(null)}
               onCreateBill={handleCreateBill}
               onViewReceipt={(bill) => setActiveReceiptBill(bill)}
             />
@@ -1077,6 +1263,31 @@ function ShopMateApp() {
           onClose={() => setActiveReceiptBill(null)}
         />
       )}
+
+      {/* Customer Modals (Phase 4, Step 1) */}
+      <CustomerModal
+        isOpen={isCustomerModalOpen}
+        onClose={() => {
+          setIsCustomerModalOpen(false);
+          setEditingCustomer(null);
+        }}
+        onSave={handleSaveCustomer}
+        editingCustomer={editingCustomer}
+      />
+
+      <CustomerProfileModal
+        customer={viewingCustomerProfile}
+        bills={bills}
+        isOpen={!!viewingCustomerProfile}
+        onClose={() => setViewingCustomerProfile(null)}
+        onViewReceipt={(bill) => setActiveReceiptBill(bill)}
+        onStartBillForCustomer={handleStartBillForCustomer}
+        onEditCustomer={(customer) => {
+          setViewingCustomerProfile(null);
+          setEditingCustomer(customer);
+          setIsCustomerModalOpen(true);
+        }}
+      />
 
       <ProductModal
         isOpen={isProductModalOpen}

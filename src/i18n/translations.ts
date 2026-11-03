@@ -432,6 +432,51 @@ export interface Translations {
   toastExpenseAdded: string;
   toastExpenseUpdated: string;
   toastExpenseDeleted: string;
+
+  // Customer Management (Phase 4, Step 1)
+  navCustomers: string;
+  navCustomersDesc: string;
+  titleCustomers: string;
+  subtitleCustomers: string;
+  totalCustomersCard: string;
+  customersWithCreditCard: string;
+  totalOutstandingCreditCard: string;
+  recentCustomersCard: string;
+  addCustomerBtn: string;
+  editCustomerTitle: string;
+  addCustomerTitle: string;
+  customerProfileTitle: string;
+  customerFullName: string;
+  customerAddress: string;
+  customerEmail: string;
+  customerNotes: string;
+  customerStatus: string;
+  customerActive: string;
+  customerArchived: string;
+  archiveCustomerBtn: string;
+  unarchiveCustomerBtn: string;
+  archiveCustomerConfirm: string;
+  unarchiveCustomerConfirm: string;
+  deleteCustomerBtn: string;
+  deleteCustomerConfirm: string;
+  searchCustomersPlaceholder: string;
+  allFilter: string;
+  activeFilter: string;
+  archivedFilter: string;
+  withCreditFilter: string;
+  totalPurchases: string;
+  totalPaid: string;
+  outstandingCreditLabel: string;
+  transactionHistory: string;
+  noCustomersFound: string;
+  noCustomerTransactions: string;
+  viewCustomerProfile: string;
+  createBillForCustomer: string;
+  toastCustomerAdded: string;
+  toastCustomerUpdated: string;
+  toastCustomerArchived: string;
+  toastCustomerUnarchived: string;
+  toastCustomerDeleted: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -839,6 +884,51 @@ export const translations: Record<Language, Translations> = {
     toastExpenseAdded: 'Expense of {amount} recorded under {category}.',
     toastExpenseUpdated: 'Expense entry updated successfully.',
     toastExpenseDeleted: 'Expense entry deleted.',
+
+    // Customer Management (Phase 4, Step 1)
+    navCustomers: 'Customers',
+    navCustomersDesc: 'Profiles & Credit Khata',
+    titleCustomers: 'Customer Management',
+    subtitleCustomers: 'Maintain customer contacts, profile history, and credit balances (Khata)',
+    totalCustomersCard: 'Total Customers',
+    customersWithCreditCard: 'With Credit (Udhar)',
+    totalOutstandingCreditCard: 'Total Outstanding Credit',
+    recentCustomersCard: 'Recent Customers',
+    addCustomerBtn: 'Add Customer',
+    editCustomerTitle: 'Edit Customer Details',
+    addCustomerTitle: 'Register New Customer',
+    customerProfileTitle: 'Customer Profile & Ledger',
+    customerFullName: 'Full Name',
+    customerAddress: 'Address / Area',
+    customerEmail: 'Email Address (Optional)',
+    customerNotes: 'Customer Notes',
+    customerStatus: 'Status',
+    customerActive: 'Active',
+    customerArchived: 'Archived',
+    archiveCustomerBtn: 'Archive Customer',
+    unarchiveCustomerBtn: 'Restore Customer',
+    archiveCustomerConfirm: 'Archive this customer? Transaction records will be safely preserved.',
+    unarchiveCustomerConfirm: 'Restore this customer to active list?',
+    deleteCustomerBtn: 'Delete Customer',
+    deleteCustomerConfirm: 'Are you sure you want to delete this customer?',
+    searchCustomersPlaceholder: 'Search by customer name or phone...',
+    allFilter: 'All Customers',
+    activeFilter: 'Active',
+    archivedFilter: 'Archived',
+    withCreditFilter: 'With Credit (Udhar)',
+    totalPurchases: 'Total Purchases',
+    totalPaid: 'Total Paid',
+    outstandingCreditLabel: 'Outstanding Balance',
+    transactionHistory: 'Purchase & Payment History',
+    noCustomersFound: 'No customers found matching your filter.',
+    noCustomerTransactions: 'No transaction history found for this customer.',
+    viewCustomerProfile: 'View Profile',
+    createBillForCustomer: 'New Bill',
+    toastCustomerAdded: 'Customer registered successfully.',
+    toastCustomerUpdated: 'Customer profile updated.',
+    toastCustomerArchived: 'Customer archived safely.',
+    toastCustomerUnarchived: 'Customer restored to active list.',
+    toastCustomerDeleted: 'Customer removed.',
   },
 
   kn: {
@@ -1245,6 +1335,51 @@ export const translations: Record<Language, Translations> = {
     toastExpenseAdded: '{category} ಅಡಿಯಲ್ಲಿ {amount} ಮೊತ್ತದ ಖರ್ಚು ದಾಖಲಾಗಿದೆ.',
     toastExpenseUpdated: 'ಖರ್ಚು ವಿವರಗಳನ್ನು ನವೀಕರಿಸಲಾಗಿದೆ.',
     toastExpenseDeleted: 'ಖರ್ಚು ದಾಖಲೆ ಅಳಿಸಲಾಗಿದೆ.',
+
+    // Customer Management (Phase 4, Step 1)
+    navCustomers: 'ಗ್ರಾಹಕರು',
+    navCustomersDesc: 'ಪ್ರೊಫೈಲ್ ಮತ್ತು ಉದ್ದರಿ ಖಾತೆ',
+    titleCustomers: 'ಗ್ರಾಹಕರ ನಿರ್ವಹಣೆ',
+    subtitleCustomers: 'ಗ್ರಾಹಕರ ಸಂಪರ್ಕಗಳು, ಖರೀದಿ ಇತಿಹಾಸ ಮತ್ತು ಬಾಕಿ ಸಾಲ (ಖಾತಾ) ನಿರ್ವಹಿಸಿ',
+    totalCustomersCard: 'ಒಟ್ಟು ಗ್ರಾಹಕರು',
+    customersWithCreditCard: 'ಉದ್ದರಿ ಇರುವ ಗ್ರಾಹಕರು',
+    totalOutstandingCreditCard: 'ಒಟ್ಟು ಬಾಕಿ ಉದ್ದರಿ',
+    recentCustomersCard: 'ಇತ್ತೀಚಿನ ಗ್ರಾಹಕರು',
+    addCustomerBtn: 'ಹೊಸ ಗ್ರಾಹಕರ ಸೇರಿಸಿ',
+    editCustomerTitle: 'ಗ್ರಾಹಕರ ವಿವರ ತಿದ್ದುಪಡಿ',
+    addCustomerTitle: 'ಹೊಸ ಗ್ರಾಹಕರ ನೋಂದಣಿ',
+    customerProfileTitle: 'ಗ್ರಾಹಕರ ಪ್ರೊಫೈಲ್ ಮತ್ತು ಲೆಡ್ಜರ್',
+    customerFullName: 'ಪೂರ್ಣ ಹೆಸರು',
+    customerAddress: 'ವಿಳಾಸ / ಏರಿಯಾ',
+    customerEmail: 'ಇಮೇಲ್ (ಐಚ್ಛಿಕ)',
+    customerNotes: 'ಗ್ರಾಹಕರ ಟಿಪ್ಪಣಿಗಳು',
+    customerStatus: 'ಸ್ಥಿತಿ',
+    customerActive: 'ಸಕ್ರಿಯ',
+    customerArchived: 'ಆರ್ಕೈವ್ ಆಗಿದೆ',
+    archiveCustomerBtn: 'ಆರ್ಕೈವ್ ಮಾಡಿ',
+    unarchiveCustomerBtn: 'ಮರುಸ್ಥಾಪಿಸಿ',
+    archiveCustomerConfirm: 'ಈ ಗ್ರಾಹಕರನ್ನು ಆರ್ಕೈವ್ ಮಾಡಬೇಕೆ? ಹಳೆಯ ಬಿಲ್ಲಿಂಗ್ ದಾಖಲೆಗಳು ಸುರಕ್ಷಿತವಾಗಿರುತ್ತವೆ.',
+    unarchiveCustomerConfirm: 'ಈ ಗ್ರಾಹಕರನ್ನು ಸಕ್ರಿಯ ಪಟ್ಟಿಗೆ ಮರುಸ್ಥಾಪಿಸಬೇಕೆ?',
+    deleteCustomerBtn: 'ಗ್ರಾಹಕರನ್ನು ಅಳಿಸಿ',
+    deleteCustomerConfirm: 'ಈ ಗ್ರಾಹಕರನ್ನು ಅಳಿಸಲು ನೀವು ಖಚಿತವಾಗಿದ್ದೀರಾ?',
+    searchCustomersPlaceholder: 'ಗ್ರಾಹಕರ ಹೆಸರು ಅಥವಾ ಮೊಬೈಲ್ ಮೂಲಕ ಹುಡುಕಿ...',
+    allFilter: 'ಎಲ್ಲ ಗ್ರಾಹಕರು',
+    activeFilter: 'ಸಕ್ರಿಯ',
+    archivedFilter: 'ಆರ್ಕೈವ್',
+    withCreditFilter: 'ಉದ್ದರಿ ಬಾಕಿ ಇರುವವರು',
+    totalPurchases: 'ಒಟ್ಟು ಖರೀದಿ',
+    totalPaid: 'ಪಾವತಿಸಿದ ಮೊತ್ತ',
+    outstandingCreditLabel: 'ಉದ್ದರಿ ಬಾಕಿ',
+    transactionHistory: 'ಖರೀದಿ ಮತ್ತು ಬಿಲ್ ಇತಿಹಾಸ',
+    noCustomersFound: 'ಯಾವುದೇ ಗ್ರಾಹಕರು ಕಂಡುಬಂದಿಲ್ಲ.',
+    noCustomerTransactions: 'ಈ ಗ್ರಾಹಕರಿಗೆ ಯಾವುದೇ ಬಿಲ್ ದಾಖಲೆಗಳಿಲ್ಲ.',
+    viewCustomerProfile: 'ಪ್ರೊಫೈಲ್ ನೋಡಿ',
+    createBillForCustomer: 'ಹೊಸ ಬಿಲ್',
+    toastCustomerAdded: 'ಗ್ರಾಹಕರನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಸೇರಿಸಲಾಗಿದೆ.',
+    toastCustomerUpdated: 'ಗ್ರಾಹಕರ ವಿವರ ನವೀಕರಿಸಲಾಗಿದೆ.',
+    toastCustomerArchived: 'ಗ್ರಾಹಕರನ್ನು ಆರ್ಕೈವ್ ಮಾಡಲಾಗಿದೆ.',
+    toastCustomerUnarchived: 'ಗ್ರಾಹಕರನ್ನು ಮರುಸ್ಥಾಪಿಸಲಾಗಿದೆ.',
+    toastCustomerDeleted: 'ಗ್ರಾಹಕರನ್ನು ತೆಗೆದುಹಾಕಲಾಗಿದೆ.',
   },
 
   hi: {
@@ -1651,6 +1786,51 @@ export const translations: Record<Language, Translations> = {
     toastExpenseAdded: '{category} में {amount} का खर्च दर्ज किया गया।',
     toastExpenseUpdated: 'खर्च विवरण अपडेट किया गया।',
     toastExpenseDeleted: 'खर्च प्रविष्टि हटा दी गई।',
+
+    // Customer Management (Phase 4, Step 1)
+    navCustomers: 'ग्राहक',
+    navCustomersDesc: 'प्रोफ़ाइल और उधार खाता',
+    titleCustomers: 'ग्राहक प्रबंधन',
+    subtitleCustomers: 'ग्राहक संपर्क, खरीद इतिहास और बकाया उधार खाता प्रबंधित करें',
+    totalCustomersCard: 'कुल पंजीकृत ग्राहक',
+    customersWithCreditCard: 'उधार वाले ग्राहक',
+    totalOutstandingCreditCard: 'कुल बकाया उधार',
+    recentCustomersCard: 'हाल के ग्राहक',
+    addCustomerBtn: 'नया ग्राहक जोड़ें',
+    editCustomerTitle: 'ग्राहक विवरण संपादित करें',
+    addCustomerTitle: 'नया ग्राहक पंजीकृत करें',
+    customerProfileTitle: 'ग्राहक प्रोफ़ाइल और खाता बही',
+    customerFullName: 'पूरा नाम',
+    customerAddress: 'पता / क्षेत्र',
+    customerEmail: 'ईमेल (वैकल्पिक)',
+    customerNotes: 'ग्राहक नोट्स',
+    customerStatus: 'स्थिति',
+    customerActive: 'सक्रिय',
+    customerArchived: 'संग्रहीत',
+    archiveCustomerBtn: 'आर्काइव करें',
+    unarchiveCustomerBtn: 'पुनर्स्थापित करें',
+    archiveCustomerConfirm: 'क्या आप इस ग्राहक को संग्रहित करना चाहते हैं? बिलिंग रिकॉर्ड सुरक्षित रहेंगे।',
+    unarchiveCustomerConfirm: 'क्या आप इस ग्राहक को सक्रिय सूची में वापस लाना चाहते हैं?',
+    deleteCustomerBtn: 'ग्राहक हटाएं',
+    deleteCustomerConfirm: 'क्या आप इस ग्राहक को हटाना चाहते हैं?',
+    searchCustomersPlaceholder: 'ग्राहक के नाम या फ़ोन से खोजें...',
+    allFilter: 'सभी ग्राहक',
+    activeFilter: 'सक्रिय',
+    archivedFilter: 'संग्रहीत',
+    withCreditFilter: 'उधार बाकी',
+    totalPurchases: 'कुल खरीदारी',
+    totalPaid: 'कुल भुगतान',
+    outstandingCreditLabel: 'बकाया राशि',
+    transactionHistory: 'लेन-देन और बिल इतिहास',
+    noCustomersFound: 'कोई ग्राहक नहीं मिला।',
+    noCustomerTransactions: 'इस ग्राहक के लिए कोई लेन-देन इतिहास नहीं है।',
+    viewCustomerProfile: 'प्रोफ़ाइल देखें',
+    createBillForCustomer: 'नया बिल बनाएं',
+    toastCustomerAdded: 'ग्राहक सफलतापूर्वक जोड़ा गया।',
+    toastCustomerUpdated: 'ग्राहक प्रोफ़ाइल अपडेट की गई।',
+    toastCustomerArchived: 'ग्राहक को संग्रहित कर दिया गया।',
+    toastCustomerUnarchived: 'ग्राहक को सक्रिय सूची में पुनर्स्थापित किया गया।',
+    toastCustomerDeleted: 'ग्राहक हटा दिया गया।',
   },
 
   te: {
@@ -2057,6 +2237,51 @@ export const translations: Record<Language, Translations> = {
     toastExpenseAdded: '{category} క్రింద {amount} ఖర్చు నమోదు చేయబడింది.',
     toastExpenseUpdated: 'ఖర్చు వివరాలు అప్‌డేట్ చేయబడ్డాయి.',
     toastExpenseDeleted: 'ఖర్చు రికార్డు తొలగించబడింది.',
+
+    // Customer Management (Phase 4, Step 1)
+    navCustomers: 'కస్టమర్లు',
+    navCustomersDesc: 'ప్రొఫైల్స్ & అప్పుల ఖాతా',
+    titleCustomers: 'కస్టమర్ల నిర్వహణ',
+    subtitleCustomers: 'కస్టమర్ వివరాలు, కొనుగోలు చరిత్ర మరియు బకాయిల ఖాతా నిర్వహించండి',
+    totalCustomersCard: 'మొత్తం కస్టమర్లు',
+    customersWithCreditCard: 'అప్పు ఉన్న కస్టమర్లు',
+    totalOutstandingCreditCard: 'మొత్తం బకాయి అప్పు',
+    recentCustomersCard: 'ఇటీవలి కస్టమర్లు',
+    addCustomerBtn: 'కొత్త కస్టమర్ జోడించండి',
+    editCustomerTitle: 'కస్టమర్ వివరాలు సవరించండి',
+    addCustomerTitle: 'కొత్త కస్టమర్ నమోదు',
+    customerProfileTitle: 'కస్టమర్ ప్రొఫైల్ & లెడ్జర్',
+    customerFullName: 'పూర్తి పేరు',
+    customerAddress: 'చిరునామా',
+    customerEmail: 'ఈమెయిల్ (ఐచ్ఛికం)',
+    customerNotes: 'నోట్స్',
+    customerStatus: 'స్థితి',
+    customerActive: 'యాక్టివ్',
+    customerArchived: 'ఆర్కైవ్ చేయబడింది',
+    archiveCustomerBtn: 'ఆర్కైవ్ చేయండి',
+    unarchiveCustomerBtn: 'పునరుద్ధరించండి',
+    archiveCustomerConfirm: 'ఈ కస్టమర్ను ఆర్కైవ్ చేయాలా? బిల్ రికార్డులు భద్రంగా ఉంటాయి.',
+    unarchiveCustomerConfirm: 'ఈ కస్టమర్ను యాక్టివ్ లిస్ట్ లోకి మార్చాలా?',
+    deleteCustomerBtn: 'కస్టమర్ను తొలగించండి',
+    deleteCustomerConfirm: 'ఈ కస్టమర్ను తొలగించాలనుకుంటున్నారా?',
+    searchCustomersPlaceholder: 'కస్టమర్ పేరు లేదా ఫోన్ ద్వారా వెతకండి...',
+    allFilter: 'అందరు కస్టమర్లు',
+    activeFilter: 'యాక్టివ్',
+    archivedFilter: 'ఆర్కైవ్ చేయబడినవి',
+    withCreditFilter: 'అప్పు ఉన్నవారు',
+    totalPurchases: 'మొత్తం కొనుగోళ్లు',
+    totalPaid: 'చెల్లించిన మొత్తం',
+    outstandingCreditLabel: 'బకాయి మొత్తం',
+    transactionHistory: 'లావాదేవీల చరిత్ర',
+    noCustomersFound: 'కస్టమర్లు ఎవరూ కనుగొనబడలేదు.',
+    noCustomerTransactions: 'ఈ కస్టమర్కు లావాదేవీల చరిత్ర లేదు.',
+    viewCustomerProfile: 'ప్రొఫైల్ చూడండి',
+    createBillForCustomer: 'కొత్త బిల్లు',
+    toastCustomerAdded: 'కస్టమర్ విజయవంతంగా జోడించబడ్డారు.',
+    toastCustomerUpdated: 'కస్టమర్ వివరాలు నవీకరించబడ్డాయి.',
+    toastCustomerArchived: 'కస్టమర్ ఆర్కైవ్ చేయబడ్డారు.',
+    toastCustomerUnarchived: 'కస్టమర్ పునరుద్ధరించబడ్డారు.',
+    toastCustomerDeleted: 'కస్టమర్ తొలగించబడ్డారు.',
   },
 
   ta: {
@@ -2463,6 +2688,51 @@ export const translations: Record<Language, Translations> = {
     toastExpenseAdded: '{category} பிரிவில் {amount} செலவு பதிவு செய்யப்பட்டது.',
     toastExpenseUpdated: 'செலவு விவரங்கள் புதுப்பிக்கப்பட்டன.',
     toastExpenseDeleted: 'செலவுப் பதிவு நீக்கப்பட்டது.',
+
+    // Customer Management (Phase 4, Step 1)
+    navCustomers: 'வாடிக்கையாளர்கள்',
+    navCustomersDesc: 'விவரங்கள் & கடன் கணக்கு',
+    titleCustomers: 'வாடிக்கையாளர் மேலாண்மை',
+    subtitleCustomers: 'வாடிக்கையாளர் தகவல்கள், கொள்முதல் வரலாறு மற்றும் கடன் நிலுவை (காதா) மேலாண்மை',
+    totalCustomersCard: 'மொத்த வாடிக்கையாளர்கள்',
+    customersWithCreditCard: 'கடன் நிலுவை உள்ளவர்கள்',
+    totalOutstandingCreditCard: 'மொத்த கடன் நிலுவை',
+    recentCustomersCard: 'சமீபத்திய வாடிக்கையாளர்கள்',
+    addCustomerBtn: 'புதிய வாடிக்கையாளர் சேர்க்க',
+    editCustomerTitle: 'வாடிக்கையாளர் விவரம் திருத்து',
+    addCustomerTitle: 'புதிய வாடிக்கையாளர் பதிவு',
+    customerProfileTitle: 'வாடிக்கையாளர் சுயவிவரம் & லெட்ஜர்',
+    customerFullName: 'முழு பெயர்',
+    customerAddress: 'முகவரி / பகுதி',
+    customerEmail: 'மின்னஞ்சல் (விருப்பத்தேர்வு)',
+    customerNotes: 'குறிப்புகள்',
+    customerStatus: 'நிலை',
+    customerActive: 'செயலில்',
+    customerArchived: 'காப்பகப்படுத்தப்பட்டது',
+    archiveCustomerBtn: 'காப்பகப்படுத்து',
+    unarchiveCustomerBtn: 'மீட்டமை',
+    archiveCustomerConfirm: 'இந்த வாடிக்கையாளரை காப்பகப்படுத்த வேண்டுமா? பரிவர்த்தனை பதிவுகள் பாதுகாக்கப்படும்.',
+    unarchiveCustomerConfirm: 'இந்த வாடிக்கையாளரை மீண்டும் செயல்படுத்தவா?',
+    deleteCustomerBtn: 'நீக்கு',
+    deleteCustomerConfirm: 'இந்த வாடிக்கையாளரை நீக்க உறுதியாக உள்ளீர்களா?',
+    searchCustomersPlaceholder: 'பெயர் அல்லது தொலைபேசி மூலம் தேடவும்...',
+    allFilter: 'அனைத்து வாடிக்கையாளர்கள்',
+    activeFilter: 'செயலில் உள்ளவர்கள்',
+    archivedFilter: 'காப்பகப்படுத்தப்பட்டவை',
+    withCreditFilter: 'கடன் நிலுவை உள்ளவர்கள்',
+    totalPurchases: 'மொத்த கொள்முதல்',
+    totalPaid: 'செலுத்திய தொகை',
+    outstandingCreditLabel: 'கடன் நிலுவை',
+    transactionHistory: 'பரிவர்த்தனை வரலாறு',
+    noCustomersFound: 'வாடிக்கையாளர்கள் எவரும் காணப்படவில்லை.',
+    noCustomerTransactions: 'பரிவர்த்தனை வரலாறு எதுவும் இல்லை.',
+    viewCustomerProfile: 'சுயவிவரம் பார்க்க',
+    createBillForCustomer: 'புதிய பில்',
+    toastCustomerAdded: 'வாடிக்கையாளர் வெற்றிகரமாக சேர்க்கப்பட்டார்.',
+    toastCustomerUpdated: 'வாடிக்கையாளர் விவரங்கள் புதுப்பிக்கப்பட்டன.',
+    toastCustomerArchived: 'வாடிக்கையாளர் காப்பகப்படுத்தப்பட்டார்.',
+    toastCustomerUnarchived: 'வாடிக்கையாளர் மீட்டமைக்கப்பட்டார்.',
+    toastCustomerDeleted: 'வாடிக்கையாளர் நீக்கப்பட்டார்.',
   },
 
   ml: {
@@ -2869,6 +3139,51 @@ export const translations: Record<Language, Translations> = {
     toastExpenseAdded: '{category} ഇനത്തിൽ {amount} ചെലവ് രേഖപ്പെടുത്തി.',
     toastExpenseUpdated: 'ചെലവ് വിവരങ്ങൾ അപ്ഡേറ്റ് ചെയ്തു.',
     toastExpenseDeleted: 'ചെലവ് രേഖ നീക്കം ചെയ്തു.',
+
+    // Customer Management (Phase 4, Step 1)
+    navCustomers: 'ഉപഭോക്താക്കൾ',
+    navCustomersDesc: 'പ്രൊഫൈലുകളും കടം അക്കൗണ്ടും',
+    titleCustomers: 'ഉപഭോക്തൃ മാനേജ്മെന്റ്',
+    subtitleCustomers: 'ഉപഭോക്തൃ വിവരങ്ങൾ, വാങ്ങൽ ചരിത്രം, കടം ബാക്കി (ഖാത) കൈകാര്യം ചെയ്യുക',
+    totalCustomersCard: 'ആകെ ഉപഭോക്താക്കൾ',
+    customersWithCreditCard: 'കടമുള്ള ഉപഭോക്താക്കൾ',
+    totalOutstandingCreditCard: 'ആകെ ബാക്കി കടം',
+    recentCustomersCard: 'സമീപകാല ഉപഭോക്താക്കൾ',
+    addCustomerBtn: 'പുതിയ ഉപഭോക്താവിനെ ചേർക്കുക',
+    editCustomerTitle: 'വിവരങ്ങൾ തിരുത്തുക',
+    addCustomerTitle: 'പുതിയ ഉപഭോക്താവിനെ രജിസ്റ്റർ ചെയ്യുക',
+    customerProfileTitle: 'ഉപഭോക്തൃ പ്രൊഫൈലും ലെഡ്ജറും',
+    customerFullName: 'പൂർണ്ണ നാമം',
+    customerAddress: 'വിലാസം',
+    customerEmail: 'ഇമെയിൽ (ഐച്ഛികം)',
+    customerNotes: 'കുറിപ്പുകൾ',
+    customerStatus: 'നില',
+    customerActive: 'സജീവം',
+    customerArchived: 'ആർക്കൈവ് ചെയ്തത്',
+    archiveCustomerBtn: 'ആർക്കൈവ് ചെയ്യുക',
+    unarchiveCustomerBtn: 'പുനഃസ്ഥാപിക്കുക',
+    archiveCustomerConfirm: 'ഈ ഉപഭോക്താവിനെ ആർക്കൈവ് ചെയ്യണോ? ബില്ലിംഗ് വിവരങ്ങൾ സുരക്ഷിതമായിരിക്കും.',
+    unarchiveCustomerConfirm: 'ഈ ഉപഭോക്താവിനെ സജീവ ലിസ്റ്റിലേക്ക് മാറ്റണോ?',
+    deleteCustomerBtn: 'ഡിലീറ്റ് ചെയ്യുക',
+    deleteCustomerConfirm: 'ഈ ഉപഭോക്താവിനെ നീക്കം ചെയ്യണമെന്ന് ഉറപ്പാണോ?',
+    searchCustomersPlaceholder: 'പേര് അല്ലെങ്കിൽ ഫോൺ നമ്പർ ഉപയോഗിച്ച് തിരയുക...',
+    allFilter: 'എല്ലാ ഉപഭോക്താക്കളും',
+    activeFilter: 'സജീവം',
+    archivedFilter: 'ആർക്കൈവ് ചെയ്തവ',
+    withCreditFilter: 'കടമുള്ളവർ',
+    totalPurchases: 'ആകെ വാങ്ങലുകൾ',
+    totalPaid: 'അടച്ച തുക',
+    outstandingCreditLabel: 'ബാക്കി തുക',
+    transactionHistory: 'ഇടപാടുകളുടെ ചരിത്രം',
+    noCustomersFound: 'ഉപഭോക്താക്കളാരും കണ്ടെത്താനായില്ല.',
+    noCustomerTransactions: 'ഇടപാടുകളുടെ വിവരങ്ങൾ ലഭ്യമല്ല.',
+    viewCustomerProfile: 'പ്രൊഫൈൽ കാണുക',
+    createBillForCustomer: 'പുതിയ ബിൽ',
+    toastCustomerAdded: 'ഉപഭോക്താവിനെ വിജയകരമായി ചേർത്തു.',
+    toastCustomerUpdated: 'വിവരങ്ങൾ പുതുക്കി.',
+    toastCustomerArchived: 'ഉപഭോക്താവിനെ ആർക്കൈവ് ചെയ്തു.',
+    toastCustomerUnarchived: 'ഉപഭോക്താവിനെ പുനഃസ്ഥാപിച്ചു.',
+    toastCustomerDeleted: 'ഉപഭോക്താവിനെ നീക്കം ചെയ്തു.',
   },
 
   mr: {
@@ -3275,5 +3590,50 @@ export const translations: Record<Language, Translations> = {
     toastExpenseAdded: '{category} अंतर्गत {amount} खर्च नोंदवला गेला.',
     toastExpenseUpdated: 'खर्च तपशील अद्यतनित केले गेले.',
     toastExpenseDeleted: 'खर्च नोंद हटवली गेली.',
+
+    // Customer Management (Phase 4, Step 1)
+    navCustomers: 'ग्राहक',
+    navCustomersDesc: 'प्रोफाइल आणि उधारी खाते',
+    titleCustomers: 'ग्राहक व्यवस्थापन',
+    subtitleCustomers: 'ग्राहक संपर्क, खरेदी इतिहास आणि उधारी खाते (खातावही) व्यवस्थापित करा',
+    totalCustomersCard: 'एकूण ग्राहक',
+    customersWithCreditCard: 'उधारी असलेले ग्राहक',
+    totalOutstandingCreditCard: 'एकूण थकीत उधारी',
+    recentCustomersCard: 'नुकतेच जोडलेले ग्राहक',
+    addCustomerBtn: 'नवीन ग्राहक जोडा',
+    editCustomerTitle: 'ग्राहक माहिती संपादित करा',
+    addCustomerTitle: 'नवीन ग्राहक नोंदणी',
+    customerProfileTitle: 'ग्राहक प्रोफाइल आणि खातेवही',
+    customerFullName: 'पूर्ण नाव',
+    customerAddress: 'पत्ता / परिसर',
+    customerEmail: 'ईमेल (पर्यायी)',
+    customerNotes: 'टिपा',
+    customerStatus: 'स्थिती',
+    customerActive: 'सक्रिय',
+    customerArchived: 'संग्रहित',
+    archiveCustomerBtn: 'आर्काइव्ह करा',
+    unarchiveCustomerBtn: 'पुनर्संचयित करा',
+    archiveCustomerConfirm: 'या ग्राहकाला आर्काइव्ह करायचे आहे का? बिलिंग रेकॉर्ड सुरक्षित राहतील.',
+    unarchiveCustomerConfirm: 'या ग्राहकाला सक्रिय यादीत परत आणायचे आहे का?',
+    deleteCustomerBtn: 'ग्राहक हटवा',
+    deleteCustomerConfirm: 'तुम्हाला हा ग्राहक नक्की हटवायचा आहे का?',
+    searchCustomersPlaceholder: 'ग्राहकाचे नाव किंवा फोन नंबरने शोधा...',
+    allFilter: 'सर्व ग्राहक',
+    activeFilter: 'सक्रिय',
+    archivedFilter: 'संग्रहित',
+    withCreditFilter: 'उधारी बाकी असलेले',
+    totalPurchases: 'एकूण खरेदी',
+    totalPaid: 'एकूण भरलेली रक्कम',
+    outstandingCreditLabel: 'थकीत रक्कम',
+    transactionHistory: 'खरेदी आणि बिल इतिहास',
+    noCustomersFound: 'एकही ग्राहक सापडला नाही.',
+    noCustomerTransactions: 'या ग्राहकाचा कोणताही व्यवहार इतिहास नाही.',
+    viewCustomerProfile: 'प्रोफाइल पहा',
+    createBillForCustomer: 'नवीन बिल',
+    toastCustomerAdded: 'ग्राहक यशस्वीरित्या जोडला गेला.',
+    toastCustomerUpdated: 'ग्राहक प्रोफाइल अद्यतनित केले.',
+    toastCustomerArchived: 'ग्राहक संग्रहित करण्यात आला.',
+    toastCustomerUnarchived: 'ग्राहक सक्रिय यादीत पुनर्संचयित केला.',
+    toastCustomerDeleted: 'ग्राहक हटवला गेला.',
   },
 };

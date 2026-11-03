@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Search,
   ShoppingCart,
@@ -16,13 +16,17 @@ import {
   Sparkles,
   AlertTriangle,
   RotateCcw,
+  Users,
 } from 'lucide-react';
-import { Product, Bill, BillItem, PaymentMethod } from '../types';
+import { Product, Bill, BillItem, PaymentMethod, Customer } from '../types';
 import { useTranslation } from '../i18n/LanguageContext';
 
 interface BillingViewProps {
   inventory: Product[];
   bills: Bill[];
+  customers?: Customer[];
+  selectedCustomerForBill?: Customer | null;
+  onClearSelectedCustomer?: () => void;
   onCreateBill: (billData: Omit<Bill, 'id' | 'createdAt'>) => Promise<Bill | null>;
   onViewReceipt: (bill: Bill) => void;
 }
@@ -30,6 +34,9 @@ interface BillingViewProps {
 export const BillingView: React.FC<BillingViewProps> = ({
   inventory,
   bills,
+  customers = [],
+  selectedCustomerForBill,
+  onClearSelectedCustomer,
   onCreateBill,
   onViewReceipt,
 }) => {
@@ -43,11 +50,21 @@ export const BillingView: React.FC<BillingViewProps> = ({
   const [discountType, setDiscountType] = useState<'flat' | 'percent'>('flat');
   const [discountValue, setDiscountValue] = useState<number>(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
-  const [customerName, setCustomerName] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
+  const [customerName, setCustomerName] = useState(selectedCustomerForBill?.name || '');
+  const [customerPhone, setCustomerPhone] = useState(selectedCustomerForBill?.phone || '');
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | undefined>(selectedCustomerForBill?.id);
   const [cashReceived, setCashReceived] = useState<number | ''>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Sync if selectedCustomerForBill changes externally
+  useEffect(() => {
+    if (selectedCustomerForBill) {
+      setCustomerName(selectedCustomerForBill.name);
+      setCustomerPhone(selectedCustomerForBill.phone);
+      setSelectedCustomerId(selectedCustomerForBill.id);
+    }
+  }, [selectedCustomerForBill]);
 
   // Categories list
   const categories = useMemo(() => {
@@ -187,6 +204,7 @@ export const BillingView: React.FC<BillingViewProps> = ({
       profit: finalAmount - costOfGoods,
       paymentMethod,
       paymentStatus: paymentMethod === 'credit' ? ('pending' as const) : ('paid' as const),
+      customerId: selectedCustomerId || undefined,
       customerName: customerName.trim() || undefined,
       customerPhone: customerPhone.trim() || undefined,
       cashReceived: paymentMethod === 'cash' && typeof cashReceived === 'number' ? cashReceived : undefined,
@@ -199,6 +217,8 @@ export const BillingView: React.FC<BillingViewProps> = ({
         clearCart();
         setCustomerName('');
         setCustomerPhone('');
+        setSelectedCustomerId(undefined);
+        if (onClearSelectedCustomer) onClearSelectedCustomer();
         onViewReceipt(created);
       }
     } catch (err: any) {
@@ -537,6 +557,30 @@ export const BillingView: React.FC<BillingViewProps> = ({
 
             {/* Customer Details & Payment-specific fields */}
             <div className="space-y-2 pt-1 text-xs">
+              {selectedCustomerId && (
+                <div className="flex items-center justify-between p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs">
+                  <div className="flex items-center gap-1.5 truncate">
+                    <User className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span className="font-semibold truncate">
+                      {customerName}
+                    </span>
+                    <span className="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-mono">
+                      {selectedCustomerId}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedCustomerId(undefined);
+                      if (onClearSelectedCustomer) onClearSelectedCustomer();
+                    }}
+                    className="text-emerald-700 hover:text-emerald-950 text-[11px] font-medium underline shrink-0 cursor-pointer ml-2"
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="text-[11px] font-medium text-slate-600 block mb-1">
@@ -547,11 +591,32 @@ export const BillingView: React.FC<BillingViewProps> = ({
                     <User className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
-                      placeholder="e.g. Ramesh"
+                      list="registered-customers-list"
+                      placeholder="e.g. Rajesh Sharma"
                       value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setCustomerName(val);
+                        // Check if value matches an existing customer
+                        const matched = customers.find(
+                          (c) => c.name.toLowerCase() === val.toLowerCase()
+                        );
+                        if (matched) {
+                          setCustomerPhone(matched.phone);
+                          setSelectedCustomerId(matched.id);
+                        }
+                      }}
                       className="w-full pl-8 pr-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
                     />
+                    <datalist id="registered-customers-list">
+                      {customers
+                        .filter((c) => c.status !== 'archived')
+                        .map((c) => (
+                          <option key={c.id} value={c.name}>
+                            {c.phone} ({c.id})
+                          </option>
+                        ))}
+                    </datalist>
                   </div>
                 </div>
 
@@ -565,7 +630,15 @@ export const BillingView: React.FC<BillingViewProps> = ({
                       type="tel"
                       placeholder="98450..."
                       value={customerPhone}
-                      onChange={(e) => setCustomerPhone(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setCustomerPhone(val);
+                        const matched = customers.find((c) => c.phone === val);
+                        if (matched) {
+                          setCustomerName(matched.name);
+                          setSelectedCustomerId(matched.id);
+                        }
+                      }}
                       className="w-full pl-8 pr-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
                     />
                   </div>

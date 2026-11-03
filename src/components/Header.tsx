@@ -40,6 +40,11 @@ export const Header: React.FC<HeaderProps> = ({
           title: t('titleBilling'),
           subtitle: t('subtitleBilling'),
         };
+      case 'customers':
+        return {
+          title: t('titleCustomers'),
+          subtitle: t('subtitleCustomers'),
+        };
       case 'expenses':
         return {
           title: t('titleExpenses'),

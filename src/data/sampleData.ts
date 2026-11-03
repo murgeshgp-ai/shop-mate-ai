@@ -1,4 +1,67 @@
-import { Product, DailySale, Suggestion, Supplier, PurchaseOrder, Bill, Expense } from '../types.ts';
+import { Product, DailySale, Suggestion, Supplier, PurchaseOrder, Bill, Expense, Customer } from '../types.ts';
+
+export const INITIAL_CUSTOMERS: Customer[] = [
+  {
+    id: 'cust-1',
+    name: 'Rajesh Sharma',
+    phone: '+91 98451 22334',
+    address: '#45, 14th Main, 4th Block, Jayanagar, Bengaluru 560011',
+    email: 'rajesh.sharma@gmail.com',
+    notes: 'Prefers UPI payments. Buys Aashirvaad Atta and Nandini Ghee weekly.',
+    createdAt: '2026-09-10',
+    status: 'active',
+  },
+  {
+    id: 'cust-2',
+    name: 'Priya Hegde',
+    phone: '+91 99002 44556',
+    address: 'Flat 302, Sai Residency, 8th Cross, Malleshwaram, Bengaluru 560003',
+    email: 'priya.hegde@outlook.com',
+    notes: 'Always pays cash. Frequent buyer of biscuits, Maggi, and Bru coffee.',
+    createdAt: '2026-09-18',
+    status: 'active',
+  },
+  {
+    id: 'cust-3',
+    name: 'Manjunath K',
+    phone: '+91 97412 88990',
+    address: 'No. 18, 2nd Stage, Vijayanagar, Bengaluru 560040',
+    email: 'manju.k@gmail.com',
+    notes: 'Regular monthly Udhar (credit) customer. Settles account between 5th and 10th of every month.',
+    createdAt: '2026-08-25',
+    status: 'active',
+  },
+  {
+    id: 'cust-4',
+    name: 'Anand Murthy',
+    phone: '+91 98862 34567',
+    address: '#12, 5th Cross, Rajajinagar, Bengaluru 560010',
+    email: 'anand.murthy@yahoo.com',
+    notes: 'Neighborhood customer. Buys household staples and detergent.',
+    createdAt: '2026-10-02',
+    status: 'active',
+  },
+  {
+    id: 'cust-5',
+    name: 'Smt. Lakshmi Devi',
+    phone: '+91 94480 11223',
+    address: '#88, Gandhi Bazaar Main Road, Basavanagudi, Bengaluru 560004',
+    email: '',
+    notes: 'Senior citizen. Requests delivery for heavy grocery bags.',
+    createdAt: '2026-10-15',
+    status: 'active',
+  },
+  {
+    id: 'cust-6',
+    name: 'Venkatesh Prasad',
+    phone: '+91 96112 33445',
+    address: 'No. 204, BTM 2nd Stage, Bengaluru 560076',
+    email: 'vprasad@techmail.in',
+    notes: 'Relocated to Mysore last month.',
+    createdAt: '2026-07-20',
+    status: 'archived',
+  },
+];
 
 export const INITIAL_SUPPLIERS: Supplier[] = [
   {

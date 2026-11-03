@@ -8,6 +8,7 @@ import {
   INITIAL_DAILY_SALES,
   INITIAL_BILLS,
   INITIAL_EXPENSES,
+  INITIAL_CUSTOMERS,
 } from '../src/data/sampleData.ts';
 import {
   Product,
@@ -19,6 +20,7 @@ import {
   BillItem,
   Expense,
   FinancialSummary,
+  Customer,
 } from '../src/types.ts';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -29,6 +31,7 @@ const DB_FILE = path.resolve(DB_DIR, 'shopmate_db.json');
 export interface DatabaseSchema {
   products: Product[];
   suppliers: Supplier[];
+  customers: Customer[];
   purchases: PurchaseOrder[];
   dailySales: DailySale[];
   bills: Bill[];
@@ -49,6 +52,7 @@ class Database {
           this.cache = {
             products: parsed.products,
             suppliers: parsed.suppliers,
+            customers: Array.isArray(parsed.customers) && parsed.customers.length > 0 ? parsed.customers : INITIAL_CUSTOMERS,
             purchases: parsed.purchases || INITIAL_PURCHASE_ORDERS,
             dailySales: parsed.dailySales || INITIAL_DAILY_SALES,
             bills: Array.isArray(parsed.bills) ? parsed.bills : INITIAL_BILLS,
@@ -65,6 +69,7 @@ class Database {
       this.cache = {
         products: INITIAL_PRODUCTS,
         suppliers: INITIAL_SUPPLIERS,
+        customers: INITIAL_CUSTOMERS,
         purchases: INITIAL_PURCHASE_ORDERS,
         dailySales: INITIAL_DAILY_SALES,
         bills: INITIAL_BILLS,
@@ -78,6 +83,7 @@ class Database {
       this.cache = {
         products: INITIAL_PRODUCTS,
         suppliers: INITIAL_SUPPLIERS,
+        customers: INITIAL_CUSTOMERS,
         purchases: INITIAL_PURCHASE_ORDERS,
         dailySales: INITIAL_DAILY_SALES,
         bills: INITIAL_BILLS,
@@ -222,6 +228,186 @@ class Database {
       return true;
     }
     return false;
+  }
+
+  // ==================== CUSTOMERS (Phase 4, Step 1) ====================
+  async getCustomers(): Promise<Customer[]> {
+    if (!this.cache) await this.init();
+    return this.cache!.customers || [];
+  }
+
+  async getCustomer(id: string): Promise<Customer | null> {
+    if (!this.cache) await this.init();
+    return (this.cache!.customers || []).find((c) => c.id === id) || null;
+  }
+
+  async saveCustomer(customerData: Partial<Customer> & { name: string; phone: string }): Promise<Customer> {
+    if (!this.cache) await this.init();
+
+    const name = customerData.name?.trim();
+    const phone = customerData.phone?.trim();
+
+    if (!name) {
+      throw new Error('Customer name is required.');
+    }
+    if (!phone) {
+      throw new Error('Customer phone number is required.');
+    }
+
+    if (customerData.id) {
+      const index = (this.cache!.customers || []).findIndex((c) => c.id === customerData.id);
+      if (index !== -1) {
+        const existing = this.cache!.customers[index];
+        const updated: Customer = {
+          ...existing,
+          ...customerData,
+          name,
+          phone,
+          address: customerData.address !== undefined ? customerData.address.trim() : existing.address,
+          email: customerData.email !== undefined ? customerData.email.trim() : existing.email,
+          notes: customerData.notes !== undefined ? customerData.notes.trim() : existing.notes,
+          status: customerData.status || existing.status || 'active',
+          id: existing.id,
+          createdAt: existing.createdAt,
+        };
+        this.cache!.customers[index] = updated;
+        await this.persist();
+        return updated;
+      }
+    }
+
+    // Check for ID collision
+    let newId = customerData.id?.trim();
+    if (newId) {
+      const existingWithId = (this.cache!.customers || []).some((c) => c.id === newId);
+      if (existingWithId) {
+        throw new Error(`Customer ID "${newId}" already exists. Customer IDs must be unique.`);
+      }
+    } else {
+      newId = `cust-${Date.now()}`;
+    }
+
+    const newCustomer: Customer = {
+      id: newId,
+      name,
+      phone,
+      address: customerData.address?.trim() || '',
+      email: customerData.email?.trim() || '',
+      notes: customerData.notes?.trim() || '',
+      createdAt: customerData.createdAt || new Date().toISOString().split('T')[0],
+      status: customerData.status || 'active',
+    };
+
+    if (!Array.isArray(this.cache!.customers)) {
+      this.cache!.customers = [];
+    }
+
+    this.cache!.customers.unshift(newCustomer);
+    await this.persist();
+    return newCustomer;
+  }
+
+  async archiveCustomer(id: string, archive: boolean = true): Promise<Customer> {
+    if (!this.cache) await this.init();
+    const index = (this.cache!.customers || []).findIndex((c) => c.id === id);
+    if (index === -1) {
+      throw new Error(`Customer with ID ${id} not found.`);
+    }
+
+    const customer = this.cache!.customers[index];
+    const updated: Customer = {
+      ...customer,
+      status: archive ? 'archived' : 'active',
+    };
+
+    this.cache!.customers[index] = updated;
+    await this.persist();
+    return updated;
+  }
+
+  async deleteCustomer(id: string): Promise<{ success: boolean; archived: boolean; message: string }> {
+    if (!this.cache) await this.init();
+    const customer = (this.cache!.customers || []).find((c) => c.id === id);
+    if (!customer) {
+      throw new Error(`Customer with ID ${id} not found.`);
+    }
+
+    // Check for transaction history in bills
+    const bills = this.cache!.bills || [];
+    const hasTransactions = bills.some(
+      (b) =>
+        (b.customerId && b.customerId === id) ||
+        (b.customerPhone && b.customerPhone === customer.phone) ||
+        (b.customerName && b.customerName.toLowerCase() === customer.name.toLowerCase())
+    );
+
+    if (hasTransactions) {
+      // Archive customer to preserve financial history and audit trail
+      const index = this.cache!.customers.findIndex((c) => c.id === id);
+      this.cache!.customers[index] = {
+        ...customer,
+        status: 'archived',
+      };
+      await this.persist();
+      return {
+        success: true,
+        archived: true,
+        message: 'Customer has transaction history and was archived instead of permanently deleted to preserve billing records.',
+      };
+    }
+
+    // If zero transactions, safely remove
+    this.cache!.customers = this.cache!.customers.filter((c) => c.id !== id);
+    await this.persist();
+    return {
+      success: true,
+      archived: false,
+      message: 'Customer deleted successfully.',
+    };
+  }
+
+  async getCustomerProfile(id: string): Promise<{
+    customer: Customer;
+    totalPurchases: number;
+    totalPaid: number;
+    outstandingCredit: number;
+    transactions: Bill[];
+  }> {
+    if (!this.cache) await this.init();
+    const customer = (this.cache!.customers || []).find((c) => c.id === id);
+    if (!customer) {
+      throw new Error(`Customer with ID ${id} not found.`);
+    }
+
+    const bills = this.cache!.bills || [];
+    const customerBills = bills.filter(
+      (b) =>
+        (b.customerId && b.customerId === id) ||
+        (b.customerPhone && b.customerPhone === customer.phone) ||
+        (b.customerName && b.customerName.toLowerCase() === customer.name.toLowerCase())
+    );
+
+    let totalPurchases = 0;
+    let totalPaid = 0;
+    let outstandingCredit = 0;
+
+    for (const b of customerBills) {
+      const amt = b.totalAmount ?? b.finalAmount ?? 0;
+      totalPurchases += amt;
+      if (b.paymentStatus === 'paid') {
+        totalPaid += amt;
+      } else if (b.paymentStatus === 'pending') {
+        outstandingCredit += amt;
+      }
+    }
+
+    return {
+      customer,
+      totalPurchases: Math.round(totalPurchases * 100) / 100,
+      totalPaid: Math.round(totalPaid * 100) / 100,
+      outstandingCredit: Math.round(outstandingCredit * 100) / 100,
+      transactions: customerBills,
+    };
   }
 
   // ==================== PURCHASES ====================

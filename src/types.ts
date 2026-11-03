@@ -28,6 +28,17 @@ export interface Product {
   supplierName?: string;
 }
 
+export interface Customer {
+  id: string;
+  name: string;
+  phone: string;
+  address: string;
+  email?: string;
+  notes?: string;
+  createdAt: string; // YYYY-MM-DD
+  status: 'active' | 'archived';
+}
+
 export interface Supplier {
   id: string;
   name: string;
@@ -96,6 +107,7 @@ export interface Bill {
   time: string; // HH:mm:ss
   customerName?: string;
   customerPhone?: string;
+  customerId?: string;
   items: BillItem[];
   subtotal: number;
   discount: number; // Flat or computed INR discount
@@ -198,6 +210,7 @@ export interface ChatMessage {
 export type ActiveTab =
   | 'dashboard'
   | 'billing'
+  | 'customers'
   | 'inventory'
   | 'suppliers'
   | 'purchases'

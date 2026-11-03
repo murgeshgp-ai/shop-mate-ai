@@ -14,6 +14,7 @@ import {
   ClipboardList,
   Receipt,
   Wallet,
+  Users,
   X
 } from 'lucide-react';
 import { ActiveTab } from '../types';
@@ -51,6 +52,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       description: t('navBillingDesc'),
       icon: Receipt,
       highlightBadge: 'POS',
+    },
+    {
+      id: 'customers' as ActiveTab,
+      label: t('navCustomers'),
+      description: t('navCustomersDesc'),
+      icon: Users,
     },
     {
       id: 'chat' as ActiveTab,
