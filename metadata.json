@@ -1,0 +1,6 @@
+{
+  "name": "ShopMate AI - Small Business & Inventory Assistant",
+  "description": "Modern AI-powered business assistant for small shop owners with inventory management, sales analytics, and Gemini AI advisory.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
