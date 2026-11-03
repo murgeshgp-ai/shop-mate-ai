@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { GoogleGenAI, Type } from '@google/genai';
+import { db } from './server/db.js';
 
 dotenv.config();
 
@@ -67,6 +68,235 @@ async function startServer() {
     }
   }
 
+  // Initialize Database on startup
+  await db.init();
+
+  // === Persistent Database REST APIs ===
+
+  // Inventory APIs
+  app.get('/api/inventory', async (_req, res) => {
+    try {
+      const items = await db.getProducts();
+      res.json(items);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post('/api/inventory', async (req, res) => {
+    try {
+      const item = await db.saveProduct(req.body);
+      res.status(201).json(item);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.put('/api/inventory/:id', async (req, res) => {
+    try {
+      const item = await db.saveProduct({ ...req.body, id: req.params.id });
+      res.json(item);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.delete('/api/inventory/:id', async (req, res) => {
+    try {
+      const success = await db.deleteProduct(req.params.id);
+      res.json({ success });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Supplier APIs
+  app.get('/api/suppliers', async (_req, res) => {
+    try {
+      const suppliers = await db.getSuppliers();
+      res.json(suppliers);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post('/api/suppliers', async (req, res) => {
+    try {
+      if (!req.body.name || !req.body.phone) {
+        return res.status(400).json({ error: 'Supplier name and phone number are required.' });
+      }
+      const supplier = await db.saveSupplier(req.body);
+      res.status(201).json(supplier);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.put('/api/suppliers/:id', async (req, res) => {
+    try {
+      const supplier = await db.saveSupplier({ ...req.body, id: req.params.id });
+      res.json(supplier);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.delete('/api/suppliers/:id', async (req, res) => {
+    try {
+      const success = await db.deleteSupplier(req.params.id);
+      res.json({ success });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Purchase Order APIs
+  app.get('/api/purchases', async (_req, res) => {
+    try {
+      const orders = await db.getPurchases();
+      res.json(orders);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post('/api/purchases', async (req, res) => {
+    try {
+      if (!req.body.supplierId) {
+        return res.status(400).json({ error: 'Supplier selection is required.' });
+      }
+      if (!Array.isArray(req.body.items) || req.body.items.length === 0) {
+        return res.status(400).json({ error: 'At least one product item is required.' });
+      }
+      const order = await db.savePurchase(req.body);
+      res.status(201).json(order);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.put('/api/purchases/:id', async (req, res) => {
+    try {
+      const order = await db.savePurchase({ ...req.body, id: req.params.id });
+      res.json(order);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  // Feature 4: Mark purchase as received & automatically update inventory stock
+  app.post('/api/purchases/:id/receive', async (req, res) => {
+    try {
+      const result = await db.receivePurchase(req.params.id);
+      res.json(result);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.delete('/api/purchases/:id', async (req, res) => {
+    try {
+      const success = await db.deletePurchase(req.params.id);
+      res.json({ success });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get('/api/all-data', async (_req, res) => {
+    try {
+      const data = await db.getAllData();
+      res.json(data);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // === POS Billing & Invoicing APIs (Phase 3) ===
+  app.get('/api/bills', async (_req, res) => {
+    try {
+      const bills = await db.getBills();
+      res.json(bills);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post('/api/bills', async (req, res) => {
+    try {
+      if (!Array.isArray(req.body.items) || req.body.items.length === 0) {
+        return res.status(400).json({ error: 'Bill must contain at least one item.' });
+      }
+      if (req.body.paymentMethod === 'credit' && !req.body.customerName) {
+        return res.status(400).json({ error: 'Customer name is required for credit transactions (ಉದ್ದರಿ / Udhar).' });
+      }
+      const newBill = await db.createBill(req.body);
+      res.status(201).json(newBill);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.get('/api/bills/:id', async (req, res) => {
+    try {
+      const bill = await db.getBill(req.params.id);
+      if (!bill) return res.status(404).json({ error: 'Bill not found' });
+      res.json(bill);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // === Expense Management APIs (Phase 3) ===
+  app.get('/api/expenses', async (_req, res) => {
+    try {
+      const expenses = await db.getExpenses();
+      res.json(expenses);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post('/api/expenses', async (req, res) => {
+    try {
+      if (!req.body.title || !req.body.amount || !req.body.category) {
+        return res.status(400).json({ error: 'Title, amount, and category are required.' });
+      }
+      const expense = await db.saveExpense(req.body);
+      res.status(201).json(expense);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.put('/api/expenses/:id', async (req, res) => {
+    try {
+      const expense = await db.saveExpense({ ...req.body, id: req.params.id });
+      res.json(expense);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.delete('/api/expenses/:id', async (req, res) => {
+    try {
+      const success = await db.deleteExpense(req.params.id);
+      res.json({ success });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Financial Dashboard Summary API (Phase 3)
+  app.get('/api/financial-summary', async (_req, res) => {
+    try {
+      const summary = await db.getFinancialSummary();
+      res.json(summary);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // AI Chatbot endpoint
   app.post('/api/chat', async (req, res) => {
     try {
@@ -83,7 +313,7 @@ async function startServer() {
 
       const shopContextSummary = shopContext
         ? `
-CURRENT STORE SNAPSHOT:
+CURRENT STORE & FINANCIAL SNAPSHOT:
 - Total Products in Catalog: ${shopContext.totalProducts ?? 'N/A'}
 - Total Current Stock Units: ${shopContext.totalStockUnits ?? 'N/A'}
 - Low Stock Items (${shopContext.lowStockCount ?? 0}): ${
@@ -91,20 +321,29 @@ CURRENT STORE SNAPSHOT:
               ? shopContext.lowStockItems.map((i: any) => `${i.name} (${i.quantity} left, min 10)`).join(', ')
               : 'None'
           }
-- Total Sales (Period): ₹${shopContext.totalSales ?? 'N/A'}
-- Estimated Profit: ₹${shopContext.estimatedProfit ?? 'N/A'} (Average margin: ${shopContext.marginPercent ?? 'N/A'}%)
+- Total Revenue: ₹${shopContext.totalRevenue ?? shopContext.totalSales ?? 'N/A'}
+- Cost of Goods Sold (COGS): ₹${shopContext.costOfGoodsSold ?? 'N/A'}
+- Gross Profit: ₹${shopContext.grossProfit ?? shopContext.estimatedProfit ?? 'N/A'}
+- Operating Expenses: ₹${shopContext.totalOperatingExpenses ?? 'N/A'}
+- Net Profit: ₹${shopContext.netProfit ?? 'N/A'}
+- Cash Received (Cash & UPI only): ₹${shopContext.cashReceived ?? 'N/A'}
+- Outstanding Customer Credit (Udhar / Pending): ₹${shopContext.outstandingCredit ?? 'N/A'}
 - Top 3 Best-Sellers: ${
             Array.isArray(shopContext.topSellers)
               ? shopContext.topSellers.map((s: any) => `${s.name} (${s.unitsSold} sold)`).join(', ')
               : 'N/A'
           }
+IMPORTANT ACCOUNTING RULES:
+- Never count unpaid customer credit (Udhar) as cash in hand.
+- Net profit = Gross profit minus operating expenses.
+- Always quote exact verified figures from the snapshot above.
 `
         : '';
 
       const langInstruction = getLanguageInstruction(language);
 
-      const systemInstruction = `You are ShopMate AI, a friendly, sharp, and highly practical business mentor and assistant for small shop owners (grocery stores, retail shops, corner stores, boutiques).
-Your goal is to help the shopkeeper maximize profit, avoid stockouts, price products wisely, run attractive promotions, and control expenses.
+      const systemInstruction = `You are ShopMate AI, a friendly, sharp, and highly practical business mentor and financial advisor for small Indian shop owners (Kirana stores, retail shops, corner stores).
+Your goal is to help the shopkeeper maximize profit, avoid stockouts, collect outstanding udhar credit, manage daily expenses, and price products wisely.
 Always provide concrete, actionable advice in plain, accessible language with bullet points and clear numbers when applicable.
 ${langInstruction}
 ${shopContextSummary}

@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   LayoutDashboard,
   Package,
@@ -11,6 +10,10 @@ import {
   Bot,
   ChevronRight,
   ShieldCheck,
+  Building2,
+  ClipboardList,
+  Receipt,
+  Wallet,
   X
 } from 'lucide-react';
 import { ActiveTab } from '../types';
@@ -43,6 +46,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: LayoutDashboard,
     },
     {
+      id: 'billing' as ActiveTab,
+      label: t('navBilling'),
+      description: t('navBillingDesc'),
+      icon: Receipt,
+      highlightBadge: 'POS',
+    },
+    {
       id: 'chat' as ActiveTab,
       label: t('navChat'),
       description: t('navChatDesc'),
@@ -55,6 +65,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
       description: t('navInventoryDesc'),
       icon: Package,
       badgeCount: lowStockCount > 0 ? lowStockCount : undefined,
+    },
+    {
+      id: 'suppliers' as ActiveTab,
+      label: t('navSuppliers'),
+      description: t('navSuppliersDesc'),
+      icon: Building2,
+    },
+    {
+      id: 'purchases' as ActiveTab,
+      label: t('navPurchases'),
+      description: t('navPurchasesDesc'),
+      icon: ClipboardList,
+    },
+    {
+      id: 'expenses' as ActiveTab,
+      label: t('navExpenses'),
+      description: t('navExpensesDesc'),
+      icon: Wallet,
     },
     {
       id: 'sales' as ActiveTab,

@@ -13,9 +13,20 @@ import {
   MinusCircle,
   CheckCircle,
   Sparkles,
+  Calendar,
+  Clock,
+  ShieldCheck,
+  Layers,
+  Building2,
 } from 'lucide-react';
 import { Product } from '../types';
-import { formatCurrency, formatNumber, calculateMargin } from '../utils/formatters';
+import {
+  formatCurrency,
+  formatNumber,
+  calculateMargin,
+  getEarliestExpiry,
+  formatIndianDate,
+} from '../utils/formatters';
 import { useTranslation } from '../i18n/LanguageContext';
 
 interface InventoryViewProps {
@@ -25,6 +36,7 @@ interface InventoryViewProps {
   onDeleteProduct: (product: Product) => void;
   onUpdateQuantity: (productId: string, newQuantity: number) => void;
   onAskAIAboutProduct: (productName: string) => void;
+  onOpenBatchesModal?: (product: Product) => void;
 }
 
 export const InventoryView: React.FC<InventoryViewProps> = ({
@@ -34,18 +46,28 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
   onDeleteProduct,
   onUpdateQuantity,
   onAskAIAboutProduct,
+  onOpenBatchesModal,
 }) => {
   const { t, translateCategory } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [stockFilter, setStockFilter] = useState<'all' | 'low' | 'healthy'>('all');
-  const [sortBy, setSortBy] = useState<'name' | 'quantity' | 'margin' | 'price'>('name');
+  const [stockFilter, setStockFilter] = useState<'all' | 'low' | 'healthy' | 'expiring_soon' | 'expired'>('all');
+  const [sortBy, setSortBy] = useState<'name' | 'quantity' | 'margin' | 'price' | 'expiry'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   // Extract unique categories
   const categories = useMemo(() => {
     const set = new Set(products.map((p) => p.category));
     return ['all', ...Array.from(set)];
+  }, [products]);
+
+  // Expiry counts
+  const expiringSoonCount = useMemo(() => {
+    return products.filter((p) => getEarliestExpiry(p).status === 'expiring_soon').length;
+  }, [products]);
+
+  const expiredCount = useMemo(() => {
+    return products.filter((p) => getEarliestExpiry(p).status === 'expired').length;
   }, [products]);
 
   // Filtered & sorted products
@@ -55,16 +77,21 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
         const matchesSearch =
           p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           p.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          p.category.toLowerCase().includes(searchTerm.toLowerCase());
+          p.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (p.supplierName && p.supplierName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (p.batchNumber && p.batchNumber.toLowerCase().includes(searchTerm.toLowerCase()));
 
         const matchesCategory =
           selectedCategory === 'all' || p.category === selectedCategory;
 
         const isLow = p.quantity <= (p.minStockThreshold || 10);
-        const matchesStock =
-          stockFilter === 'all' ||
-          (stockFilter === 'low' && isLow) ||
-          (stockFilter === 'healthy' && !isLow);
+        const { status: expStatus } = getEarliestExpiry(p);
+
+        let matchesStock = true;
+        if (stockFilter === 'low') matchesStock = isLow;
+        else if (stockFilter === 'healthy') matchesStock = !isLow;
+        else if (stockFilter === 'expiring_soon') matchesStock = expStatus === 'expiring_soon';
+        else if (stockFilter === 'expired') matchesStock = expStatus === 'expired';
 
         return matchesSearch && matchesCategory && matchesStock;
       })
@@ -80,12 +107,16 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
           const marginA = calculateMargin(a.purchasePrice, a.sellingPrice).percent;
           const marginB = calculateMargin(b.purchasePrice, b.sellingPrice).percent;
           comparison = marginA - marginB;
+        } else if (sortBy === 'expiry') {
+          const expA = getEarliestExpiry(a).expiryDate || '9999-12-31';
+          const expB = getEarliestExpiry(b).expiryDate || '9999-12-31';
+          comparison = new Date(expA).getTime() - new Date(expB).getTime();
         }
         return sortOrder === 'asc' ? comparison : -comparison;
       });
   }, [products, searchTerm, selectedCategory, stockFilter, sortBy, sortOrder]);
 
-  const toggleSort = (field: 'name' | 'quantity' | 'margin' | 'price') => {
+  const toggleSort = (field: 'name' | 'quantity' | 'margin' | 'price' | 'expiry') => {
     if (sortBy === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
@@ -96,14 +127,35 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
 
   // CSV Export
   const exportToCSV = () => {
-    const headers = ['Name', 'Category', 'SKU', 'Quantity', 'Unit', 'Purchase Price (INR)', 'Selling Price (INR)', 'Profit Margin (INR)', 'Margin (%)', 'Stock Status'];
+    const headers = [
+      'Name',
+      'Category',
+      'SKU',
+      'Supplier',
+      'Batch No',
+      'Expiry Date',
+      'Expiry Status',
+      'Quantity',
+      'Unit',
+      'Purchase Price (INR)',
+      'Selling Price (INR)',
+      'Profit Margin (INR)',
+      'Margin (%)',
+      'Stock Status',
+    ];
     const rows = filteredProducts.map((p) => {
       const margin = calculateMargin(p.purchasePrice, p.sellingPrice);
       const isLow = p.quantity <= (p.minStockThreshold || 10);
+      const { expiryDate, status: expStatus } = getEarliestExpiry(p);
+
       return [
         `"${p.name.replace(/"/g, '""')}"`,
         `"${p.category}"`,
         `"${p.sku}"`,
+        `"${p.supplierName || 'Direct'}"`,
+        `"${p.batchNumber || ''}"`,
+        `"${expiryDate || 'N/A'}"`,
+        `"${expStatus}"`,
         p.quantity,
         `"${p.unit}"`,
         p.purchasePrice.toFixed(2),
@@ -114,11 +166,16 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
       ];
     });
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `ShopMate_Inventory_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute(
+      'download',
+      `ShopMate_Inventory_${new Date().toISOString().slice(0, 10)}.csv`
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -132,6 +189,51 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* Expiry Alert Banners if any */}
+      {expiredCount > 0 && (
+        <div className="flex items-center justify-between rounded-2xl border border-rose-200 bg-rose-50/90 p-4 shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-100 text-rose-700 shrink-0">
+              <AlertTriangle className="h-5 w-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-rose-900">
+                {t('expiredAlertBanner', { count: expiredCount })}
+              </h4>
+              <p className="text-xs text-rose-700">{t('expiredAlertDesc')}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setStockFilter('expired')}
+            className="rounded-xl bg-rose-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-rose-700 transition-colors shrink-0 cursor-pointer"
+          >
+            {t('filterExpired')}
+          </button>
+        </div>
+      )}
+
+      {expiringSoonCount > 0 && (
+        <div className="flex items-center justify-between rounded-2xl border border-amber-200 bg-amber-50/90 p-4 shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-700 shrink-0">
+              <Clock className="h-5 w-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-amber-900">
+                {t('expiryAlertBanner', { count: expiringSoonCount })}
+              </h4>
+              <p className="text-xs text-amber-700">{t('expiryAlertDesc')}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setStockFilter('expiring_soon')}
+            className="rounded-xl bg-amber-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-amber-700 transition-colors shrink-0 cursor-pointer"
+          >
+            {t('filterExpiringSoon')}
+          </button>
+        </div>
+      )}
+
       {/* Top Inventory Summary Bar */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
@@ -139,7 +241,9 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
             {t('totalCatalogSkus')}
           </span>
           <div className="mt-1 text-2xl font-bold text-slate-900">{products.length}</div>
-          <span className="text-[11px] text-slate-400">{formatNumber(totalUnits)} {t('unitsOnHand')}</span>
+          <span className="text-[11px] text-slate-400">
+            {formatNumber(totalUnits)} {t('unitsOnHand')}
+          </span>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
@@ -216,11 +320,13 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
         {/* Filter Tabs & Category Selector */}
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
           {/* Stock status tabs */}
-          <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100/70 p-1 text-xs font-medium text-slate-600">
+          <div className="flex flex-wrap items-center gap-1 rounded-xl border border-slate-200 bg-slate-100/70 p-1 text-xs font-medium text-slate-600">
             <button
               onClick={() => setStockFilter('all')}
               className={`rounded-lg px-3 py-1 transition-all cursor-pointer ${
-                stockFilter === 'all' ? 'bg-white font-bold text-slate-900 shadow-2xs' : 'hover:text-slate-900'
+                stockFilter === 'all'
+                  ? 'bg-white font-bold text-slate-900 shadow-2xs'
+                  : 'hover:text-slate-900'
               }`}
             >
               {t('allItems')} ({products.length})
@@ -234,7 +340,35 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
               }`}
             >
               <AlertTriangle className="h-3 w-3" />
-              <span>{t('lowStockFilter')} ({lowStockCount})</span>
+              <span>
+                {t('lowStockFilter')} ({lowStockCount})
+              </span>
+            </button>
+            <button
+              onClick={() => setStockFilter('expiring_soon')}
+              className={`flex items-center gap-1 rounded-lg px-3 py-1 transition-all cursor-pointer ${
+                stockFilter === 'expiring_soon'
+                  ? 'bg-amber-600 font-bold text-white shadow-2xs'
+                  : 'text-amber-700 hover:text-amber-900'
+              }`}
+            >
+              <Clock className="h-3 w-3" />
+              <span>
+                {t('filterExpiringSoon')} ({expiringSoonCount})
+              </span>
+            </button>
+            <button
+              onClick={() => setStockFilter('expired')}
+              className={`flex items-center gap-1 rounded-lg px-3 py-1 transition-all cursor-pointer ${
+                stockFilter === 'expired'
+                  ? 'bg-rose-600 font-bold text-white shadow-2xs'
+                  : 'text-rose-700 hover:text-rose-900'
+              }`}
+            >
+              <AlertTriangle className="h-3 w-3" />
+              <span>
+                {t('filterExpired')} ({expiredCount})
+              </span>
             </button>
             <button
               onClick={() => setStockFilter('healthy')}
@@ -244,7 +378,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
                   : 'hover:text-slate-900'
               }`}
             >
-              {t('healthyFilter')} ({products.length - lowStockCount})
+              {t('healthyFilter')}
             </button>
           </div>
 
@@ -285,6 +419,16 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
                   </div>
                 </th>
                 <th className="px-4 py-3.5">{t('thCategory')}</th>
+                {/* Feature 1: Expiry & Batches Column */}
+                <th
+                  onClick={() => toggleSort('expiry')}
+                  className="cursor-pointer px-4 py-3.5 hover:text-slate-900"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span>{t('thExpiryDate')}</span>
+                    <ArrowUpDown className="h-3 w-3" />
+                  </div>
+                </th>
                 <th
                   onClick={() => toggleSort('quantity')}
                   className="cursor-pointer px-4 py-3.5 hover:text-slate-900"
@@ -320,12 +464,10 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
             <tbody className="divide-y divide-slate-100">
               {filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-slate-500">
+                  <td colSpan={9} className="py-12 text-center text-slate-500">
                     <Package className="mx-auto h-8 w-8 text-slate-300 mb-2" />
                     <p className="font-medium text-slate-700">{t('noProductsMatch')}</p>
-                    <p className="text-[11px] text-slate-400 mt-1">
-                      {t('tryClearingSearch')}
-                    </p>
+                    <p className="text-[11px] text-slate-400 mt-1">{t('tryClearingSearch')}</p>
                   </td>
                 </tr>
               ) : (
@@ -334,18 +476,39 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
                   const isLow = p.quantity <= (p.minStockThreshold || 10);
                   const isOut = p.quantity === 0;
 
+                  const { expiryDate, status: expStatus, daysRemaining, batchNumber } =
+                    getEarliestExpiry(p);
+                  const batchCount = p.batches?.length || (p.expiryDate ? 1 : 0);
+
                   return (
                     <tr
                       key={p.id}
                       className={`hover:bg-slate-50/80 transition-colors ${
-                        isLow ? 'bg-amber-50/30' : ''
+                        expStatus === 'expired'
+                          ? 'bg-rose-50/20'
+                          : expStatus === 'expiring_soon'
+                          ? 'bg-amber-50/30'
+                          : isLow
+                          ? 'bg-amber-50/20'
+                          : ''
                       }`}
                     >
                       {/* Name & SKU */}
                       <td className="px-5 py-3.5 font-medium text-slate-900">
                         <div className="font-semibold text-slate-900">{p.name}</div>
-                        <div className="text-[11px] text-slate-400 font-mono">
-                          {p.sku} • {p.unit}
+                        <div className="text-[11px] text-slate-400 font-mono flex items-center gap-1.5">
+                          <span>
+                            {p.sku} • {p.unit}
+                          </span>
+                          {p.supplierName && (
+                            <>
+                              <span>•</span>
+                              <span className="text-slate-500 flex items-center gap-0.5">
+                                <Building2 className="h-2.5 w-2.5 text-slate-400" />
+                                {p.supplierName}
+                              </span>
+                            </>
+                          )}
                         </div>
                       </td>
 
@@ -354,6 +517,53 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
                         <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
                           {translateCategory(p.category)}
                         </span>
+                      </td>
+
+                      {/* Feature 1: Expiry Date & Batches */}
+                      <td className="px-4 py-3.5">
+                        <div className="flex flex-col gap-1">
+                          {expiryDate ? (
+                            <div className="flex items-center gap-1.5">
+                              {expStatus === 'expired' && (
+                                <span className="inline-flex items-center gap-1 rounded-md bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700 border border-rose-200">
+                                  <AlertTriangle className="h-3 w-3 shrink-0" />
+                                  {t('expired')} ({Math.abs(daysRemaining || 0)}d ago)
+                                </span>
+                              )}
+                              {expStatus === 'expiring_soon' && (
+                                <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-200">
+                                  <Clock className="h-3 w-3 shrink-0" />
+                                  {daysRemaining === 0 ? 'Today' : `${daysRemaining}d left`}
+                                </span>
+                              )}
+                              {expStatus === 'safe' && (
+                                <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 border border-emerald-200">
+                                  <ShieldCheck className="h-3 w-3 shrink-0" />
+                                  {formatIndianDate(expiryDate)}
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-slate-400 text-[11px]">—</span>
+                          )}
+
+                          {/* Batch trigger */}
+                          <button
+                            type="button"
+                            onClick={() => onOpenBatchesModal && onOpenBatchesModal(p)}
+                            className="inline-flex items-center gap-1 text-[10px] font-medium text-blue-600 hover:text-blue-800 transition-colors cursor-pointer text-left"
+                            title="Manage multiple batches and expiry"
+                          >
+                            <Layers className="h-3 w-3" />
+                            <span>
+                              {batchCount > 1
+                                ? `${batchCount} ${t('batches')}`
+                                : batchNumber
+                                ? `Batch: ${batchNumber}`
+                                : t('viewBatches')}
+                            </span>
+                          </button>
+                        </div>
                       </td>
 
                       {/* Quantity with quick +/- buttons */}
@@ -389,18 +599,18 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
                       </td>
 
                       {/* Purchase Price (Cost) */}
-                      <td className="px-4 py-3.5 font-medium text-slate-600">
+                      <td className="px-4 py-3.5 font-medium text-slate-600 font-mono">
                         {formatCurrency(p.purchasePrice)}
                       </td>
 
                       {/* Selling Price */}
-                      <td className="px-4 py-3.5 font-bold text-slate-900">
+                      <td className="px-4 py-3.5 font-bold text-slate-900 font-mono">
                         {formatCurrency(p.sellingPrice)}
                       </td>
 
                       {/* Profit Margin ($ and %) */}
                       <td className="px-4 py-3.5">
-                        <div className="font-semibold text-emerald-600">
+                        <div className="font-semibold text-emerald-600 font-mono">
                           +{formatCurrency(margin.dollar)}
                         </div>
                         <div className="text-[11px] text-slate-500 font-medium">

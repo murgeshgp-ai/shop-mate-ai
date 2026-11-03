@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Package } from 'lucide-react';
-import { Product } from '../types';
+import { X, Package, Calendar, Building2, Layers } from 'lucide-react';
+import { Product, Supplier } from '../types';
 import { calculateMargin, formatCurrency } from '../utils/formatters';
 import { useTranslation } from '../i18n/LanguageContext';
 
@@ -10,6 +10,7 @@ interface ProductModalProps {
   onSave: (product: Omit<Product, 'id'> | Product) => void;
   editingProduct?: Product | null;
   existingCategories: string[];
+  suppliers?: Supplier[];
 }
 
 export const ProductModal: React.FC<ProductModalProps> = ({
@@ -18,6 +19,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   onSave,
   editingProduct,
   existingCategories,
+  suppliers = [],
 }) => {
   const { t, translateCategory } = useTranslation();
   const [name, setName] = useState('');
@@ -26,9 +28,13 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   const [sku, setSku] = useState('');
   const [quantity, setQuantity] = useState(15);
   const [unit, setUnit] = useState('pack');
-  const [purchasePrice, setPurchasePrice] = useState(150.00);
-  const [sellingPrice, setSellingPrice] = useState(250.00);
+  const [purchasePrice, setPurchasePrice] = useState(150.0);
+  const [sellingPrice, setSellingPrice] = useState(250.0);
   const [minStockThreshold, setMinStockThreshold] = useState(10);
+  // Feature 1 & 2 additions: Expiry, Batch, Supplier
+  const [expiryDate, setExpiryDate] = useState('');
+  const [batchNumber, setBatchNumber] = useState('');
+  const [supplierId, setSupplierId] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -41,6 +47,9 @@ export const ProductModal: React.FC<ProductModalProps> = ({
       setPurchasePrice(editingProduct.purchasePrice);
       setSellingPrice(editingProduct.sellingPrice);
       setMinStockThreshold(editingProduct.minStockThreshold || 10);
+      setExpiryDate(editingProduct.expiryDate || '');
+      setBatchNumber(editingProduct.batchNumber || '');
+      setSupplierId(editingProduct.supplierId || '');
     } else {
       setName('');
       setCategory(existingCategories[0] || 'Beverages');
@@ -48,16 +57,20 @@ export const ProductModal: React.FC<ProductModalProps> = ({
       setSku(`SKU-${Math.floor(100 + Math.random() * 900)}`);
       setQuantity(20);
       setUnit('pack');
-      setPurchasePrice(150.00);
-      setSellingPrice(250.00);
+      setPurchasePrice(150.0);
+      setSellingPrice(250.0);
       setMinStockThreshold(10);
+      setExpiryDate('');
+      setBatchNumber(`BAT-${Date.now().toString().slice(-4)}`);
+      setSupplierId(suppliers[0]?.id || '');
     }
     setErrors({});
-  }, [editingProduct, isOpen, existingCategories]);
+  }, [editingProduct, isOpen, existingCategories, suppliers]);
 
   if (!isOpen) return null;
 
   const margin = calculateMargin(purchasePrice, sellingPrice);
+  const selectedSupplierObj = suppliers.find((s) => s.id === supplierId);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,6 +89,31 @@ export const ProductModal: React.FC<ProductModalProps> = ({
 
     const finalCategory = category === '__custom__' ? customCategory || 'General' : category;
 
+    // Build or preserve batches
+    const existingBatches = editingProduct?.batches || [];
+    let updatedBatches = [...existingBatches];
+
+    if (updatedBatches.length === 0 && expiryDate) {
+      updatedBatches = [
+        {
+          id: `b-${Date.now()}`,
+          batchNumber: batchNumber.trim() || 'BAT-MAIN',
+          quantity: Number(quantity),
+          expiryDate: expiryDate,
+          purchasePrice: Number(purchasePrice),
+          purchaseDate: new Date().toISOString().split('T')[0],
+        },
+      ];
+    } else if (updatedBatches.length > 0 && expiryDate) {
+      // update primary batch
+      updatedBatches[0] = {
+        ...updatedBatches[0],
+        batchNumber: batchNumber.trim() || updatedBatches[0].batchNumber,
+        expiryDate: expiryDate,
+        quantity: Number(quantity),
+      };
+    }
+
     const productData = {
       name: name.trim(),
       category: finalCategory,
@@ -85,6 +123,11 @@ export const ProductModal: React.FC<ProductModalProps> = ({
       purchasePrice: Number(purchasePrice),
       sellingPrice: Number(sellingPrice),
       minStockThreshold: Number(minStockThreshold),
+      expiryDate: expiryDate || undefined,
+      batchNumber: batchNumber.trim() || undefined,
+      supplierId: supplierId || undefined,
+      supplierName: selectedSupplierObj?.name || undefined,
+      batches: updatedBatches,
       lastRestocked: new Date().toISOString().slice(0, 10),
     };
 
@@ -109,9 +152,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
               <h2 className="text-sm font-bold text-slate-900">
                 {editingProduct ? t('modalEditTitle') : t('modalAddTitle')}
               </h2>
-              <p className="text-[11px] text-slate-500">
-                {t('modalDesc')}
-              </p>
+              <p className="text-[11px] text-slate-500">{t('modalDesc')}</p>
             </div>
           </div>
           <button
@@ -123,7 +164,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
           {/* Product Name */}
           <div>
             <label className="block text-xs font-bold text-slate-700">
@@ -131,7 +172,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
             </label>
             <input
               type="text"
-              placeholder="e.g. Organic Honeycomb Granola (400g)"
+              placeholder="e.g. Aashirvaad Shudh Chakki Atta (5kg)"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-xs font-medium text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500/20"
@@ -139,7 +180,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
             {errors.name && <p className="mt-1 text-[11px] text-rose-500">{errors.name}</p>}
           </div>
 
-          {/* Category & Unit */}
+          {/* Category & SKU */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-slate-700">{t('labelCategory')}</label>
@@ -170,7 +211,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
               <label className="block text-xs font-bold text-slate-700">{t('labelSku')}</label>
               <input
                 type="text"
-                placeholder="e.g. GRN-102"
+                placeholder="e.g. PAN-101"
                 value={sku}
                 onChange={(e) => setSku(e.target.value)}
                 className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-xs font-mono font-medium text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500/20"
@@ -179,10 +220,64 @@ export const ProductModal: React.FC<ProductModalProps> = ({
             </div>
           </div>
 
-          {/* Quantity & Unit */}
+          {/* Feature 1: Expiry Date & Batch Number */}
+          <div className="grid grid-cols-2 gap-3 bg-slate-50/60 p-3 rounded-xl border border-slate-200">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                <Calendar className="h-3.5 w-3.5 text-blue-600" />
+                {t('labelExpiryDate')}
+              </label>
+              <input
+                type="date"
+                value={expiryDate}
+                onChange={(e) => setExpiryDate(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-800 focus:border-blue-500 focus:outline-hidden"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                <Layers className="h-3.5 w-3.5 text-blue-600" />
+                {t('labelBatchNumber')}
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. BAT-2026-B1"
+                value={batchNumber}
+                onChange={(e) => setBatchNumber(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-mono text-slate-800 focus:border-blue-500 focus:outline-hidden"
+              />
+            </div>
+          </div>
+
+          {/* Feature 2: Supplier selection */}
+          {suppliers.length > 0 && (
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                <Building2 className="h-3.5 w-3.5 text-blue-600" />
+                {t('labelSupplier')}
+              </label>
+              <select
+                value={supplierId}
+                onChange={(e) => setSupplierId(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs font-medium text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20"
+              >
+                <option value="">None / Direct Wholesale</option>
+                {suppliers.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} ({s.category})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Quantity, Unit & Threshold */}
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-bold text-slate-700">{t('labelInitialStock')}</label>
+              <label className="block text-xs font-bold text-slate-700">
+                {t('labelInitialStock')}
+              </label>
               <input
                 type="number"
                 min="0"
@@ -200,14 +295,16 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                 className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs font-medium text-slate-900 cursor-pointer"
               >
                 <option value="pack">Pack</option>
+                <option value="packet">Packet</option>
                 <option value="bottle">Bottle</option>
                 <option value="bag">Bag</option>
                 <option value="box">Box</option>
-                <option value="can">Can</option>
-                <option value="carton">Carton</option>
-                <option value="jug">Jug</option>
-                <option value="loaf">Loaf</option>
+                <option value="pouch">Pouch</option>
+                <option value="tetra">Tetra</option>
+                <option value="jar">Jar</option>
+                <option value="bar">Bar</option>
                 <option value="kg">Kg</option>
+                <option value="litre">Litre</option>
               </select>
             </div>
 
@@ -230,7 +327,9 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                 {t('labelPurchasePrice')}
               </label>
               <div className="relative mt-1">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">₹</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">
+                  ₹
+                </span>
                 <input
                   type="number"
                   step="0.50"
@@ -247,7 +346,9 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                 {t('labelSellingPrice')}
               </label>
               <div className="relative mt-1">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">₹</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">
+                  ₹
+                </span>
                 <input
                   type="number"
                   step="0.50"
@@ -270,9 +371,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
             </div>
             <div className="text-right">
               <span className="font-semibold text-emerald-900">{t('grossMarginLabel')}</span>
-              <div className="text-emerald-700 font-extrabold text-sm">
-                {margin.percent}%
-              </div>
+              <div className="text-emerald-700 font-extrabold text-sm">{margin.percent}%</div>
             </div>
           </div>
 
